@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+  # ALBの代替コンテナ
+  mock-lb:
+    build: ./mock-lb
+    container_name: mock-lb
+    image: mock-lb
+    depends_on:
+      - web
+    environment:
+      TARGET_SERVER: web
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - ./logs/lb:/var/log/nginx
+  web:
+    build: ./web
+    container_name: web
+    image: web
+    depends_on:
+      - app
+    environment:
+      APP_HOST: app
+    volumes:
+      - ./logs/web:/var/log/nginx
+  app:
+    build: ./app
+    container_name: app
+    image: wp-apache
+    depends_on:
+      mock-db:
+        condition: service_healthy
+    environment:
+      DB_HOST: mock-db:3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: review_stock
+    volumes:
+      - ./logs/app:/var/log/tomcat
+  mock-db:
+    build: ./mock-db
+    container_name: mock-db
+    image: mock-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: review_stock
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db/mysql_init:/docker-entrypoint-initdb.d
+      - ./logs/mock-db:/var/log/mysql
+    # dbの起動確認
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
