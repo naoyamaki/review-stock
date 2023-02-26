@@ -13,7 +13,7 @@ services:
       - 443:443
       - 80:80
     volumes:
-      - ./logs/lb:/var/log/nginx
+      - ./logs/mock-lb:/var/log/nginx
   web:
     build: ./web
     container_name: web
@@ -27,12 +27,12 @@ services:
   app:
     build: ./app
     container_name: app
-    image: wp-apache
+    image: app
     depends_on:
       mock-db:
         condition: service_healthy
     environment:
-      DB_HOST: mock-db:3306
+      DB_HOST: mock-db
       DB_USER: root
       DB_PASSWORD: root
       DB_NAME: review_stock
