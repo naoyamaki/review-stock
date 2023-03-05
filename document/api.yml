@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: バックエンドサーバのAPI仕様書
+  description: このドキュメントは機能開発プルリクエストと共に修正を必要とします。
+  version: 1.0
+paths:
+  /review:
+    post:
+      summary: レビューを投稿する
+      description: 
+      requestBody:
+        description: 投稿するレビューの内容
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/review'
+      responses:
+        '200':
+          description: 投稿成功、投稿したレビュー詳細ページにリダイレクト
+          content:
+            application/json:
+              schema: 
+        '400':
+          description: 投稿失敗、レスポンスボディに不備がある部分と不備の内容が入る
+          content:
+            application/json:
+              schema: 
+    put:
+      summary: 投稿したレビューを更新する
+      description: 
+    delete:
+      summary: 投稿したレビューを削除する
+      description: 
+  /review/{id}:
+    get:
+      summary: idのレビューを表示する
+      description: 
+  /user:
+    get:
+      summary: 自分の情報を取得する
+      description: 
+    post:
+      summary: 会員登録処理
+      description: 
+    put:
+      summary: 会員情報更新処理
+      description: 
+    delete:
+      summary: 退会処理
+      description: 
+  /user/{id}:
+    get:
+      summary: idのユーザの情報を表示する
+      description: 
+  /login:
+    post:
+      summary: ログイン処理
+      description: 
+  /logout:
+    post:
+      summary: ログアウト処理
+      description:
