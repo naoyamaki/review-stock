@@ -1,7 +1,6 @@
-FROM nginx:latest
+FROM nginx:mainline-alpine
 ENV TZ Asia/Tokyo
 
-RUN apt update
-RUN apt upgrade -y
+RUN apk update
 
 COPY templates/ /etc/nginx/templates/

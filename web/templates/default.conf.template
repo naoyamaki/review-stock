@@ -15,6 +15,6 @@ server {
 
   location ~^/api/(.*)$ {
     rewrite ^/api/(.*)$ /$1 break;
-    proxy_pass http://localhost:8000;
+    proxy_pass http://$BACK_END_HOST:8080;
   }
 }

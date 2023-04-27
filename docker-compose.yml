@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  # ALBの代替コンテナ
+  # ALBとcloudfrontの代替
   mock-lb:
     build: ./mock-lb
     container_name: mock-lb
@@ -9,6 +9,7 @@ services:
       - web
     environment:
       TARGET_SERVER: web
+      STATIC_BUCKET: https://hogehoge.com
     ports:
       - 443:443
       - 80:80
@@ -21,7 +22,7 @@ services:
     depends_on:
       - app
     environment:
-      APP_HOST: app
+      BACK_END_HOST: app
     volumes:
       - ./logs/web:/var/log/nginx
   app:
@@ -37,7 +38,8 @@ services:
       DB_PASSWORD: root
       DB_NAME: review_stock
     volumes:
-      - ./logs/app:/var/log/tomcat
+      - ./back-src/build/libs/ROOT.war:/usr/local/tomcat/webapps/ROOT.war
+      - ./logs/app:/usr/local/tomcat/logs
   mock-db:
     build: ./mock-db
     container_name: mock-db
