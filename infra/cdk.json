@@ -37,13 +37,13 @@
         "region": "ap-northeast-1"
       },
       "seviceName": "review-stock",
-      "vpcCidr": "10.0.3.0/22",
-      "pubricCCider": "10.0.3.0/25",
-      "publicDCider": "10.0.3.128/25",
-      "privateAppCCider": "10.0.4.0/25",
-      "privateAppDCider": "10.0.4.128/25",
-      "privateDbCCider": "10.0.5.0/25",
-      "privateDbDCider": "10.0.5.128/25"
+      "vpcCidr": "10.0.4.0/22",
+      "pubricCCider": "10.0.4.0/25",
+      "publicDCider": "10.0.4.128/25",
+      "privateAppCCider": "10.0.5.0/25",
+      "privateAppDCider": "10.0.5.128/25",
+      "privateDbCCider": "10.0.6.0/25",
+      "privateDbDCider": "10.0.6.128/25"
     },
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
