@@ -1,8 +1,6 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib';
-import * as iam from 'aws-cdk-lib/aws-iam'
-import * as path from 'path';
-import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import { Construct } from 'constructs';
 
 export class InfraStack extends cdk.Stack {
@@ -13,12 +11,9 @@ export class InfraStack extends cdk.Stack {
     const vpc = new ec2.Vpc(this, 'VPC', {
       availabilityZones: ['ap-northeast-1c', 'ap-northeast-1d'],
       ipAddresses: context.vpcCidr,
-//      flowLogs: {
-//        destination: ec2.FlowLogDestination.toS3('TODO: samplebucketsimpl')
-//      },
       vpcName: context.serviceName,
       natGateways: 2,
-      // サブネットは後続にてL2のoverrideで実装
+      // サブネットは後続にてoverrideで実装
       subnetConfiguration: [{
         cidrMask: 25,
         name: 'public-1c',
@@ -46,7 +41,7 @@ export class InfraStack extends cdk.Stack {
       }]
     });
 
-    // サブネットの設定をL2で再定義
+    // サブネットの設定を実装
     const public1c = vpc.publicSubnets[0].node.defaultChild as ec2.CfnSubnet
     public1c.addPropertyOverride('CidrBlock', context.pubricCCider)
     public1c.addPropertyOverride('availabilityZone', 'ap-northeast-1c')
@@ -65,6 +60,15 @@ export class InfraStack extends cdk.Stack {
     const privateDb1d = vpc.privateSubnets[3].node.defaultChild as ec2.CfnSubnet
     privateDb1d.addPropertyOverride('CidrBlock', context.privateDbDCider)
     privateDb1d.addPropertyOverride('availabilityZone', 'ap-northeast-1d')
+
+    // create VPC flow log
+    const flowLogBucket = new s3.Bucket(this, 'Bucket', {
+      bucketName: context.serviceName+"-vpc-flow-log"
+    });
+    const flowLog = new ec2.FlowLog(this, 'FlowLog', {
+      resourceType: ec2.FlowLogResourceType.fromVpc(vpc),
+      destination: ec2.FlowLogDestination.toS3(flowLogBucket)
+    });
 
   }
 }
