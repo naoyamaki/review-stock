@@ -1,7 +1,7 @@
 import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
-export class ApplicationStack extends Stack {
+export class FrontStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
     const context = this.node.tryGetContext('environment')

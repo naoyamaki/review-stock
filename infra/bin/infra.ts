@@ -2,7 +2,8 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { InfraStack } from '../lib/infra-stack';
-import { ApplicationStack } from '../lib/application-stack';
+import { FrontStack } from '../lib/front-stack';
+import { DataBaseStack } from '../lib/data-base-stack';
 
 const app = new cdk.App();
 
@@ -13,6 +14,10 @@ new InfraStack(app, 'InfraStack', {
   env: {account: context.env}
 });
 
-new ApplicationStack(app, 'ApplicationStack', {
+new FrontStack(app, 'FrontStack', {
+  env: {account: context.env}
+});
+
+new DataBaseStack(app, 'DataBaseStack', {
   env: {account: context.env}
 });
