@@ -1,8 +1,10 @@
-import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, Stack, StackProps } from 'aws-cdk-lib';
+import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, aws_ec2, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { NetworkStack } from './network-stack';
 
 export class FrontStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  public readonly stackProps: FrontStackProps;
+  constructor(scope: Construct, id: string, props?: FrontStackProps) {
     super(scope, id, props);
     const context = this.node.tryGetContext('environment')
 
@@ -56,4 +58,9 @@ export class FrontStack extends Stack {
     })
     staticResourceBucket.addToResourcePolicy(staticResourceBucketPolicyStatement);
   }
+}
+
+export interface FrontStackProps extends StackProps {
+  publicSubnetC: aws_ec2.CfnSubnet;
+  publicSubnetD: aws_ec2.CfnSubnet;
 }

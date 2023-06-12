@@ -1,8 +1,7 @@
 import { Stack, StackProps, Duration, aws_rds, aws_ec2, aws_kms } from 'aws-cdk-lib';
-import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 
-export class DataBaseStack extends Stack {
+export class DatabaseStack extends Stack {
   constructor(scope: Construct, id: string, props?:StackProps) {
     super(scope, id, props);
     const context = this.node.tryGetContext('environment')
