@@ -61,6 +61,6 @@ export class FrontStack extends Stack {
 }
 
 export interface FrontStackProps extends StackProps {
-  publicSubnetC: aws_ec2.CfnSubnet;
-  publicSubnetD: aws_ec2.CfnSubnet;
+  pubSubC: aws_ec2.Subnet;
+  pubSubD: aws_ec2.Subnet;
 }

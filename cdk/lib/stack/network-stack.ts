@@ -3,85 +3,127 @@ import { Construct } from 'constructs';
 
 export class NetworkStack extends Stack {
   public readonly mainVpc: aws_ec2.Vpc;
-  public readonly publicSubnetC: aws_ec2.CfnSubnet;
-  public readonly publicSubnetD: aws_ec2.CfnSubnet;
-  public readonly privateSubnetAppC: aws_ec2.CfnSubnet;
-  public readonly privateSubnetAppD: aws_ec2.CfnSubnet;
-  public readonly privateSubnetDbC: aws_ec2.CfnSubnet;
-  public readonly privateSubnetDbD: aws_ec2.CfnSubnet;
+  public readonly pubSubC: aws_ec2.Subnet;
+  public readonly pubSubD: aws_ec2.Subnet;
+  public readonly priSubCApp: aws_ec2.Subnet;
+  public readonly priSubDApp: aws_ec2.Subnet;
+  public readonly priSubCDb: aws_ec2.Subnet;
+  public readonly priSubDDb: aws_ec2.Subnet;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    const context = this.node.tryGetContext('environment')
+    const envValues = scope.node.tryGetContext(scope.node.tryGetContext('environment'));
 
-    const mainVpc = new aws_ec2.Vpc(this, 'VPC', {
+    const mainVpc = new aws_ec2.Vpc(this, 'mainVpc', {
       availabilityZones: ['ap-northeast-1c', 'ap-northeast-1d'],
-      ipAddresses: context.vpcCidr,
-      vpcName: context.serviceName,
-      natGateways: 2,
-      // サブネットは後続にてoverrideで実装
-      subnetConfiguration: [{
-        cidrMask: 25,
-        name: 'public-1c',
-        subnetType: aws_ec2.SubnetType.PUBLIC,
-      },{
-        cidrMask: 25,
-        name: 'public-1d',
-        subnetType: aws_ec2.SubnetType.PUBLIC,
-      },{
-        cidrMask: 25,
-        name: 'private-app-1c',
-        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },{
-        cidrMask: 25,
-        name: 'private-app-1d',
-        subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },{
-        cidrMask: 25,
-        name: 'private-db-1c',
-        subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
-      },{
-        cidrMask: 25,
-        name: 'private-db-1d',
-        subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
-      }]
+      ipAddresses: aws_ec2.IpAddresses.cidr(envValues.vpcCidr),
+      vpcName: envValues.serviceName,
+      subnetConfiguration: [],
     });
-
-    // サブネットの設定を実装
-    const publicSubnetC = mainVpc.publicSubnets[0].node.defaultChild as aws_ec2.CfnSubnet
-    publicSubnetC.addPropertyOverride('CidrBlock', context.pubricCCider)
-    publicSubnetC.addPropertyOverride('availabilityZone', 'ap-northeast-1c')
-    const publicSubnetD = mainVpc.publicSubnets[1].node.defaultChild as aws_ec2.CfnSubnet
-    publicSubnetD.addPropertyOverride('CidrBlock', context.publicDCider)
-    publicSubnetD.addPropertyOverride('availabilityZone', 'ap-northeast-1d')
-    const privateSubnetAppC = mainVpc.privateSubnets[0].node.defaultChild as aws_ec2.CfnSubnet
-    privateSubnetAppC.addPropertyOverride('CidrBlock', context.privateAppCCider)
-    privateSubnetAppC.addPropertyOverride('availabilityZone', 'ap-northeast-1c')
-    const privateSubnetAppD = mainVpc.privateSubnets[1].node.defaultChild as aws_ec2.CfnSubnet
-    privateSubnetAppD.addPropertyOverride('CidrBlock', context.privateAppDCider)
-    privateSubnetAppD.addPropertyOverride('availabilityZone', 'ap-northeast-1d')
-    const privateSubnetDbC = mainVpc.privateSubnets[2].node.defaultChild as aws_ec2.CfnSubnet
-    privateSubnetDbC.addPropertyOverride('CidrBlock', context.privateDbCCider)
-    privateSubnetDbC.addPropertyOverride('availabilityZone', 'ap-northeast-1c')
-    const privateSubnetDbD = mainVpc.privateSubnets[3].node.defaultChild as aws_ec2.CfnSubnet
-    privateSubnetDbD.addPropertyOverride('CidrBlock', context.privateDbDCider)
-    privateSubnetDbD.addPropertyOverride('availabilityZone', 'ap-northeast-1d')
-
-    // create VPC flow log
     const flowLogBucket = new aws_s3.Bucket(this, 'Bucket', {
-      bucketName: context.serviceName+"-vpc-flow-log"
+      bucketName: envValues.serviceName+"-vpc-flow-log"
     });
     const flowLog = new aws_ec2.FlowLog(this, 'FlowLog', {
       resourceType: aws_ec2.FlowLogResourceType.fromVpc(mainVpc),
       destination: aws_ec2.FlowLogDestination.toS3(flowLogBucket)
     });
+    const mainVpcIgw = new aws_ec2.CfnInternetGateway(this, 'mainVpcIgw', {});
+    const VPCGatewayAttachment = new aws_ec2.CfnVPCGatewayAttachment(this, 'cfnVPCGatewayAttachment', {
+      vpcId: mainVpc.vpcId,
+      internetGatewayId: mainVpcIgw.attrInternetGatewayId
+  });
 
-    this.mainVpc = mainVpc
-    this.publicSubnetC = publicSubnetC
-    this.publicSubnetD = publicSubnetD
-    this.privateSubnetAppC = privateSubnetAppC
-    this.privateSubnetAppD = privateSubnetAppD
-    this.privateSubnetDbC = privateSubnetDbC
-    this.privateSubnetDbD = privateSubnetDbD
+    // Subnet
+    const pubSubC = new aws_ec2.Subnet(this, 'pubSubC', {
+      availabilityZone: 'ap-northeast-1c',
+      cidrBlock: envValues.pubSubCCider,
+      vpcId: mainVpc.vpcId,
+    });
+    const pubSubD = new aws_ec2.Subnet(this, 'pubSubD', {
+      availabilityZone: 'ap-northeast-1d',
+      cidrBlock: envValues.pubSubDCider,
+      vpcId: mainVpc.vpcId,
+    });
+    const priSubCApp = new aws_ec2.Subnet(this, 'priSubCApp', {
+      availabilityZone: 'ap-northeast-1c',
+      cidrBlock: envValues.priSubCAppCider,
+      vpcId: mainVpc.vpcId,
+    });
+    const priSubDApp = new aws_ec2.Subnet(this, 'priSubDApp', {
+      availabilityZone: 'ap-northeast-1d',
+      cidrBlock: envValues.priSubDAppCider,
+      vpcId: mainVpc.vpcId,
+    });
+    const priSubCDb = new aws_ec2.Subnet(this, 'priSubCDb', {
+      availabilityZone: 'ap-northeast-1c',
+      cidrBlock: envValues.priSubCDbCider,
+      vpcId: mainVpc.vpcId,
+    });
+    const priSubDDb = new aws_ec2.Subnet(this, 'priSubDDb', {
+      availabilityZone: 'ap-northeast-1d',
+      cidrBlock: envValues.priSubDDbCider,
+      vpcId: mainVpc.vpcId,
+    });
+
+    // NAT Gateway
+//    const cNatgatewayIp = new aws_ec2.CfnEIP(this, 'cNatgatewayIp', {});
+//    const cNatgateway = new aws_ec2.CfnNatGateway(this, 'cNatgateway', {
+//      subnetId: pubSubC.subnetId,
+//      allocationId: cNatgatewayIp.attrAllocationId,
+//    });
+//    const dNatgatewayIp = new aws_ec2.CfnEIP(this, 'dNatgatewayIp', {});
+//    const dNatgateway = new aws_ec2.CfnNatGateway(this, 'dNatgateway', {
+//      subnetId: pubSubD.subnetId,
+//      allocationId: dNatgatewayIp.attrAllocationId,
+//    });
+
+    // routetable
+    const pubSubRouteTable = new aws_ec2.CfnRouteTable(this, 'pubSubRouteTable', {vpcId: mainVpc.vpcId});
+//    const pubSubRoute = new aws_ec2.CfnRoute(this, 'pubSubRoute', {
+//      routeTableId: pubSubRouteTable.attrRouteTableId,
+//      destinationCidrBlock: '0.0.0.0/0',
+//      gatewayId: mainVpcIgw.logicalId,
+//    });
+//    pubSubRoute.addDependency(mainVpcIgw);
+    new aws_ec2.CfnSubnetRouteTableAssociation(this, 'pubSubCRouteTableAssociation', {
+      routeTableId: pubSubRouteTable.attrRouteTableId,
+      subnetId: pubSubC.subnetId,
+    });
+    new aws_ec2.CfnSubnetRouteTableAssociation(this, 'pubSubDRouteTableAssociation', {
+      routeTableId: pubSubRouteTable.attrRouteTableId,
+      subnetId: pubSubD.subnetId,
+    });
+
+    const priSubAppCRouteTable = new aws_ec2.CfnRouteTable(this, 'priSubAppCRouteTable', {vpcId: mainVpc.vpcId});
+//    const priSubAppCRoute = new aws_ec2.CfnRoute(this, 'priSubAppCRoute', {
+//      routeTableId: priSubAppCRouteTable.attrRouteTableId,
+//      destinationCidrBlock: '0.0.0.0/0',
+//      natGatewayId: cNatgateway.logicalId
+//    });
+//    priSubAppCRoute.addDependency(cNatgateway);
+    new aws_ec2.CfnSubnetRouteTableAssociation(this, 'priSubAppCRouteTableAssociation', {
+      routeTableId: priSubAppCRouteTable.attrRouteTableId,
+      subnetId: priSubCApp.subnetId,
+    });
+
+    const priSubAppDRouteTable = new aws_ec2.CfnRouteTable(this, 'priSubAppDRouteTable', {vpcId: mainVpc.vpcId});
+//    const priSubAppDRoute = new aws_ec2.CfnRoute(this, 'priSubAppDRoute', {
+//      routeTableId: priSubAppDRouteTable.attrRouteTableId,
+//      destinationCidrBlock: '0.0.0.0/0',
+//      natGatewayId: dNatgateway.logicalId
+//    });
+//    priSubAppDRoute.addDependency(dNatgateway);
+    new aws_ec2.CfnSubnetRouteTableAssociation(this, 'priSubAppDRouteTableAssociation', {
+      routeTableId: priSubAppDRouteTable.attrRouteTableId,
+      subnetId: priSubDApp.subnetId,
+    });
+
+    this.mainVpc    = mainVpc
+    this.pubSubC    = pubSubC
+    this.pubSubD    = pubSubD
+    this.priSubCApp = priSubCApp
+    this.priSubDApp = priSubDApp
+    this.priSubCDb  = priSubCDb
+    this.priSubDDb  = priSubDDb
   }
 }
