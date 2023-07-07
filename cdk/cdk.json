@@ -19,6 +19,7 @@
   "context": {
     "prod": {
       "serviceName": "review-stock",
+      "domainName": "review-stock.hoge.com",
       "vpcCidr": "10.0.0.0/22",
       "pubSubCCider": "10.0.0.0/25",
       "pubSubDCider": "10.0.0.128/25",
@@ -29,6 +30,7 @@
     },
     "stag": {
       "serviceName": "review-stock",
+      "domainName": "review-stock.hoge-test.com",
       "vpcCidr": "10.0.4.0/22",
       "pubSubCCider": "10.0.4.0/25",
       "pubSubDCider": "10.0.4.128/25",

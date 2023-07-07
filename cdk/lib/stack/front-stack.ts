@@ -1,18 +1,52 @@
-import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, aws_ec2, Stack, StackProps } from 'aws-cdk-lib';
+import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, aws_ec2, Stack, StackProps, aws_elasticloadbalancingv2, Duration } from 'aws-cdk-lib';
+import { IpAddressType } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
-import { NetworkStack } from './network-stack';
 
 export class FrontStack extends Stack {
   public readonly stackProps: FrontStackProps;
-  constructor(scope: Construct, id: string, props?: FrontStackProps) {
+  constructor(scope: Construct, id: string, props: FrontStackProps) {
     super(scope, id, props);
-    const context = this.node.tryGetContext('environment')
 
-    const staticResourceBucket = new aws_s3.Bucket(this, 'Bucket', {
-      bucketName: context.serviceName+"-static-resource"
+    const CFN_PL_ID = 'pl-31a34658';
+
+    const albSg = new aws_ec2.SecurityGroup(this, 'albSg', {
+      vpc: props.mainVpc,
+      securityGroupName: props.envValues.serviceName+"-alb",
+    });
+    albSg.addIngressRule(
+      aws_ec2.Peer.prefixList(CFN_PL_ID),
+      aws_ec2.Port.tcp(443)
+    );
+
+    const alb = new aws_elasticloadbalancingv2.ApplicationLoadBalancer(this, 'alb', {
+      vpc: props.mainVpc,
+      internetFacing: true,
+      idleTimeout: Duration.seconds(60),
+      ipAddressType: IpAddressType.DUAL_STACK,
+      loadBalancerName: props.envValues.serviceName,
+      securityGroup: albSg,
+      vpcSubnets: { subnets: [props.pubSubC, props.pubSubD] },
     });
 
-    const cfnOriginAccessControl = new aws_cloudfront.CfnOriginAccessControl(this, 'OriginAccessControl', {
+    const listener = alb.addListener('Listener', {
+      port: 443,
+    });
+    const targetGroup = listener.addTargets('TargetGroup', {
+      port: 80
+    });
+//    lb.addRedirect({
+//      sourceProtocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
+//      targetPort: 80,
+//      targetProtocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
+//      sourcePort: 443,
+//    });
+
+    const staticResourceBucket = new aws_s3.Bucket(this, 'staticResourceBucket', {
+      bucketName: props.envValues.serviceName+"-static-resource",
+      blockPublicAccess: aws_s3.BlockPublicAccess.BLOCK_ALL,
+    });
+
+    const cfnOriginAccessControl = new aws_cloudfront.CfnOriginAccessControl(this, 'cfnOriginAccessControl', {
       originAccessControlConfig: {
         name: 'OriginAccessControlForstaticResourceBucket',
         originAccessControlOriginType: 's3',
@@ -23,7 +57,7 @@ export class FrontStack extends Stack {
     });
 
     const distribution = new aws_cloudfront.Distribution(this, 'distribution', {
-      comment: context.serviceName,
+      comment: props.envValues.serviceName,
       defaultRootObject: 'index.html',
       defaultBehavior: {
         allowedMethods: aws_cloudfront.AllowedMethods.ALLOW_GET_HEAD,
@@ -54,13 +88,15 @@ export class FrontStack extends Stack {
       resources: [`${staticResourceBucket.bucketArn}/*`],
     });
     staticResourceBucketPolicyStatement.addCondition('StringEquals', {
-      'AWS:SourceArn': `arn:aws:cloudfront::${context.accountId}:distribution/${distribution.distributionId}`
+      'AWS:SourceArn': `arn:aws:cloudfront::${props.envValues.accountId}:distribution/${distribution.distributionId}`
     })
     staticResourceBucket.addToResourcePolicy(staticResourceBucketPolicyStatement);
   }
 }
 
 export interface FrontStackProps extends StackProps {
+  mainVpc: aws_ec2.Vpc;
   pubSubC: aws_ec2.Subnet;
   pubSubD: aws_ec2.Subnet;
+  envValues: any;
 }
