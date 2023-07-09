@@ -1,4 +1,4 @@
-import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, aws_ec2, Stack, StackProps, aws_elasticloadbalancingv2, Duration } from 'aws-cdk-lib';
+import { aws_cloudfront, aws_cloudfront_origins, aws_s3, aws_iam, aws_ec2, Stack, StackProps, aws_elasticloadbalancingv2, Duration, aws_certificatemanager } from 'aws-cdk-lib';
 import { IpAddressType } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 
@@ -8,6 +8,13 @@ export class FrontStack extends Stack {
     super(scope, id, props);
 
     const CFN_PL_ID = 'pl-31a34658';
+    const CFN_ACM_ARN = '';
+    const ALB_ACM_ARN = '';
+
+//    const logBucket = new aws_s3.Bucket(this, 'logBucket', {
+//      bucketName: props.envValues.serviceName+"-log",
+//      blockPublicAccess: aws_s3.BlockPublicAccess.BLOCK_ALL,
+//    });
 
     const albSg = new aws_ec2.SecurityGroup(this, 'albSg', {
       vpc: props.mainVpc,
@@ -17,7 +24,6 @@ export class FrontStack extends Stack {
       aws_ec2.Peer.prefixList(CFN_PL_ID),
       aws_ec2.Port.tcp(443)
     );
-
     const alb = new aws_elasticloadbalancingv2.ApplicationLoadBalancer(this, 'alb', {
       vpc: props.mainVpc,
       internetFacing: true,
@@ -25,21 +31,34 @@ export class FrontStack extends Stack {
       ipAddressType: IpAddressType.DUAL_STACK,
       loadBalancerName: props.envValues.serviceName,
       securityGroup: albSg,
-      vpcSubnets: { subnets: [props.pubSubC, props.pubSubD] },
+      vpcSubnets: { subnets: props.mainVpc.publicSubnets },
     });
-
-    const listener = alb.addListener('Listener', {
+    const targetGroup = new aws_elasticloadbalancingv2.ApplicationTargetGroup(this, 'targetGroup', {
+      vpc: props.mainVpc,
+      targetGroupName: props.envValues.serviceName,
+      deregistrationDelay: Duration.seconds(60),
+      healthCheck: {
+        healthyHttpCodes: "200",
+        protocol: aws_elasticloadbalancingv2.Protocol.HTTP,
+        healthyThresholdCount: 2,
+        interval: Duration.seconds(30),
+        path: "/healthCheck/",
+        timeout: Duration.seconds(2),
+        unhealthyThresholdCount: 2
+      },
+      port: 80,
+      protocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
+      protocolVersion: aws_elasticloadbalancingv2.ApplicationProtocolVersion.HTTP1,
+      targetType: aws_elasticloadbalancingv2.TargetType.IP
+    })
+    const listener = alb.addListener('listener', {
+      certificates: [{certificateArn: ALB_ACM_ARN}],
+      defaultTargetGroups: [targetGroup],
+      protocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
       port: 443,
+      sslPolicy: aws_elasticloadbalancingv2.SslPolicy.RECOMMENDED_TLS,
     });
-    const targetGroup = listener.addTargets('TargetGroup', {
-      port: 80
-    });
-//    lb.addRedirect({
-//      sourceProtocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
-//      targetPort: 80,
-//      targetProtocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
-//      sourcePort: 443,
-//    });
+//    alb.logAccessLogs(logBucket, 'alb/');
 
     const staticResourceBucket = new aws_s3.Bucket(this, 'staticResourceBucket', {
       bucketName: props.envValues.serviceName+"-static-resource",
@@ -57,8 +76,14 @@ export class FrontStack extends Stack {
     });
 
     const distribution = new aws_cloudfront.Distribution(this, 'distribution', {
+      certificate: aws_certificatemanager.Certificate.fromCertificateArn(this, 'cfnCertificate', CFN_ACM_ARN),
+      domainNames: [props.envValues.domainName],
       comment: props.envValues.serviceName,
       defaultRootObject: 'index.html',
+//      enableLogging: true,
+//      logBucket: logBucket,
+//      logFilePrefix: "cloudfront/",
+      httpVersion: aws_cloudfront.HttpVersion.HTTP2_AND_3,
       defaultBehavior: {
         allowedMethods: aws_cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         cachedMethods: aws_cloudfront.CachedMethods.CACHE_GET_HEAD,
@@ -66,14 +91,14 @@ export class FrontStack extends Stack {
         viewerProtocolPolicy: aws_cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         origin: new aws_cloudfront_origins.S3Origin(staticResourceBucket),
       },
-//      additionalBehaviors: {
-//        '/api/': {
-//          allowedMethods: aws_cloudfront.AllowedMethods.ALLOW_ALL,
-//          cachePolicy: aws_cloudfront.CachePolicy.CACHING_DISABLED,
-//          viewerProtocolPolicy: aws_cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-//          origin: new aws_cloudfront_origins.LoadBalancerV2Origin(lb)
-//        },
-//      },
+      additionalBehaviors: {
+        '/api/': {
+          allowedMethods: aws_cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: aws_cloudfront.CachePolicy.CACHING_DISABLED,
+          viewerProtocolPolicy: aws_cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          origin: new aws_cloudfront_origins.LoadBalancerV2Origin(alb)
+        },
+      },
     });
 
     // OAIをOACへ変更

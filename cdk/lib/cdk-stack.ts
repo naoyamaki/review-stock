@@ -13,12 +13,12 @@ export class CdkStack extends Stack {
       envValues: envValues,
     });
 
-//    const frontStack = new FrontStack(scope, 'FrontStack', {
-//      mainVpc: networkStack.mainVpc,
-//      pubSubC: networkStack.pubSubC,
-//      pubSubD: networkStack.pubSubD,
-//      envValues: envValues,
-//    });
+    const frontStack = new FrontStack(scope, 'FrontStack', {
+      mainVpc: networkStack.mainVpc,
+      pubSubC: networkStack.pubSubC,
+      pubSubD: networkStack.pubSubD,
+      envValues: envValues,
+    });
 
   }
 }
