@@ -3,8 +3,8 @@ services:
   # ALBとcloudfrontの代替
   mock-lb:
     build: ./mock-lb
-    container_name: mock-lb
-    image: mock-lb
+    container_name: rs-mock-lb
+    image: rs-mock-lb
     depends_on:
       - web
     environment:
@@ -17,8 +17,8 @@ services:
       - ./logs/mock-lb:/var/log/nginx
   web:
     build: ./web
-    container_name: web
-    image: web
+    container_name: rs-web
+    image: rs-web
     depends_on:
       - app
     environment:
@@ -27,28 +27,32 @@ services:
       - ./logs/web:/var/log/nginx
   app:
     build: ./app
-    container_name: app
-    image: app
+    container_name: rs-app
+    image: rs-app
     depends_on:
+      mock-redis:
+        condition: service_started
       mock-db:
         condition: service_healthy
     environment:
       DB_HOST: mock-db
       DB_USER: root
-      DB_PASSWORD: root
+      DB_PASSWORD: SamplePW
       DB_NAME: review_stock
+#    ports:
+#      - 8080:8080
     volumes:
       - ./back-src/build/libs/ROOT.war:/usr/local/tomcat/webapps/ROOT.war
       - ./logs/app:/usr/local/tomcat/logs
   mock-db:
     build: ./mock-db
-    container_name: mock-db
-    image: mock-db
+    container_name: rs-mock-db
+    image: rs-mock-db
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: SamplePW
       MYSQL_DATABASE: review_stock
-    ports:
-      - 3306:3306
+#    ports:
+#      - 3306:3306
     volumes:
       - ./db/mysql_init:/docker-entrypoint-initdb.d
       - ./logs/mock-db:/var/log/mysql
@@ -59,3 +63,10 @@ services:
       timeout: 3s
       retries: 30
       start_period: 10s
+  mock-redis:
+    build: ./mock-redis
+    image: rs-mock-redis
+    container_name: rs-mock-redis
+
+#    ports:
+#      - 6379:6379

@@ -2,6 +2,6 @@ spring:
   session:
     store-type: redis
   redis:
-    host: ${REDIS_HOST}
-    password: ${REDIS_PASSWORD}
+    host: localhost
+    password: SamplePW
     database: 0
