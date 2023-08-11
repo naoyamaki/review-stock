@@ -54,7 +54,7 @@ services:
 #    ports:
 #      - 3306:3306
     volumes:
-      - ./db/mysql_init:/docker-entrypoint-initdb.d
+      - ./mock-db/mysql_init:/docker-entrypoint-initdb.d
       - ./logs/mock-db:/var/log/mysql
     # dbの起動確認
     healthcheck:
@@ -70,3 +70,6 @@ services:
 
 #    ports:
 #      - 6379:6379
+9e37ac4f6ed51f4fa7977479e3748eb842cbdc1ccd6ae7c44eef9ae0ecff2ffe
+b4c6fe39e17e5f1ee938b7643e84092d6702ca56341bed3ba7fa0446531f8e4aa3e7ac4a8fb0aa77dc623a76dcafc32839d6af778f28c21bcbc2d2b1a322a20a
+$5$1234$qmoc3xaDXIs4DCzFESfSU2I4UPA/7D6Jh.M.1hEG1VA
