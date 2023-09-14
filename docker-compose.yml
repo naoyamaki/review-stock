@@ -35,10 +35,11 @@ services:
       mock-db:
         condition: service_healthy
     environment:
-      DB_HOST: mock-db
-      DB_USER: root
-      DB_PASSWORD: SamplePW
-      DB_NAME: review_stock
+      RDB_RW_ENDPOINT: mock-db
+      RDB_RO_ENDPOINT: mock-db
+      RDB_USER: root
+      RDB_PASSWORD: SamplePW
+      RDB_NAME: review_stock
 #    ports:
 #      - 8080:8080
     volumes:
@@ -67,9 +68,5 @@ services:
     build: ./mock-redis
     image: rs-mock-redis
     container_name: rs-mock-redis
-
 #    ports:
 #      - 6379:6379
-9e37ac4f6ed51f4fa7977479e3748eb842cbdc1ccd6ae7c44eef9ae0ecff2ffe
-b4c6fe39e17e5f1ee938b7643e84092d6702ca56341bed3ba7fa0446531f8e4aa3e7ac4a8fb0aa77dc623a76dcafc32839d6af778f28c21bcbc2d2b1a322a20a
-$5$1234$qmoc3xaDXIs4DCzFESfSU2I4UPA/7D6Jh.M.1hEG1VA
