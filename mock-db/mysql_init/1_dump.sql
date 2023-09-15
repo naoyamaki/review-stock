@@ -46,13 +46,13 @@ CREATE TABLE `review` (
   CONSTRAINT `user_id` FOREIGN KEY (`user_id_fk`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE `favolite_review` (
+CREATE TABLE `favorite_review` (
   `user_id_fk` int unsigned NOT NULL,
-  `review_di_fk` int unsigned NOT NULL,
+  `review_id_fk` int unsigned NOT NULL,
   `insert_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id_fk`,`review_di_fk`),
-  KEY `favolite_review_review_id_idx` (`review_di_fk`),
-  CONSTRAINT `favolite_review_review_id` FOREIGN KEY (`review_di_fk`) REFERENCES `review` (`review_id`),
-  CONSTRAINT `favolite_review_user_id` FOREIGN KEY (`user_id_fk`) REFERENCES `user` (`user_id`)
+  PRIMARY KEY (`user_id_fk`,`review_id_fk`),
+  KEY `favorite_review_review_id_idx` (`review_id_fk`),
+  CONSTRAINT `favorite_review_review_id` FOREIGN KEY (`review_id_fk`) REFERENCES `review` (`review_id`),
+  CONSTRAINT `favorite_review_user_id` FOREIGN KEY (`user_id_fk`) REFERENCES `user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
