@@ -1,7 +1,14 @@
+
 spring:
+  datasource:
+    url: jdbc:mysql:replication://localhost:3306,localhost:3306/review_stock?serverTimezone=JST
+    username: root
+    password: SamplePW
+    driverClassName: com.mysql.jdbc.Driver
   session:
     store-type: redis
   redis:
     host: localhost
     password: SamplePW
+    port: 6379
     database: 0

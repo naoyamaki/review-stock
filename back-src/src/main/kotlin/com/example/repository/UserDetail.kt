@@ -7,8 +7,8 @@ import org.jetbrains.exposed.sql.javatime.datetime
 object UserDetail:Table("UserDetail") {
     val userIdFk = uinteger("user_id_fk")
     val name = varchar("name",20)
-    val profile = varchar("profile",200)
-    val imageIdFk = uinteger("image_id_fk")
+    val profile = varchar("profile",200).nullable()
+    val imageIdFk = uinteger("image_id_fk").nullable()
     val insertAt = datetime("insert_at").default(LocalDateTime.now())
     val updateAt = datetime("update_at").default(LocalDateTime.now())
     override val primaryKey = PrimaryKey(userIdFk)

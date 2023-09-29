@@ -29,6 +29,7 @@ dependencies {
   implementation("org.jetbrains.exposed","exposed-jodatime","0.43.0")
   implementation("org.jetbrains.exposed","exposed-java-time","0.43.0")
   implementation("org.jetbrains.exposed","exposed-spring-boot-starter","0.43.0")
+  implementation("org.jetbrains.exposed","spring-transaction","0.43.0")
   implementation("mysql:mysql-connector-java:8.0.33")
   providedRuntime("org.springframework.boot:spring-boot-starter-tomcat:3.1.1")
   testImplementation("org.springframework.boot:spring-boot-starter-test:3.1.1")
@@ -49,6 +50,6 @@ tasks.withType<War> {
   archiveName = "ROOT.war"
 }
 
-tasks.withType<Test> {
-  useJUnitPlatform()
-}
+//tasks.withType<Test> {
+//  useJUnitPlatform()
+//}
